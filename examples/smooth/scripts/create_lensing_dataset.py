@@ -8,9 +8,9 @@ info = yaml_load_file("../yamls/run_lensing_fiducial.yaml")
 model = get_model(info)
 model.loglikes({})
 
-fname = "../data/clkk_reconstruction_sim.fits"
+ndir = model.likelihood["soliket.LensingLikelihood"].data_folder
+fname = ndir + "clkk_reconstruction_sim.fits"
 hdul = fits.open(fname)
 hdul[8].data["value"][:] = model.likelihood["soliket.LensingLikelihood"]._get_theory()
 
-ndir = "../data/clkk_smooth.fits"
-hdul.writeto(ndir, overwrite=True)
+hdul.writeto(ndir + "clkk_smooth.fits", overwrite=True)

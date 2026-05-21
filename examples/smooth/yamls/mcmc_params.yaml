@@ -1,0 +1,4 @@
+mcmc:
+  Rminus1_stop: 0.5
+  Rminus1_cl_stop: 0.5
+  max_tries: 10000

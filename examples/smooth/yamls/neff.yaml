@@ -1,0 +1,11 @@
+params:
+  nnu:
+    prior:
+      min: 0.
+      max: 5.
+    ref:
+      dist: norm
+      loc: 3.044
+      scale: 0.05
+    latex: N_\mathrm{eff}
+    proposal: 0.01

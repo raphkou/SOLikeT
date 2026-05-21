@@ -77,15 +77,3 @@ tau:
     scale: 0.0073
   proposal: 0.0073
   latex: \tau_\mathrm{reio}
-mnu1:
-  value: 0.0
-  drop: True
-mnu2:
-  value: 'lambda: np.sqrt(7.5e-5)'
-  drop: True
-mnu3:
-  value: 'lambda: np.sqrt(2.5e-3)'
-  drop: True
-mnu:
-  value: 'lambda mnu1, mnu2 ,mnu3: mnu1 + mnu2 + mnu3'
-  latex: \sum m_\nu

@@ -1,0 +1,42 @@
+params:
+  theta_i:
+    prior:
+      min: 0.
+      max: 3.1
+    ref:
+      min: 0.
+      max: 3.1
+    latex: \theta_i
+    proposal: 0.01
+  fde_zc:
+    prior:
+      min: 0.001
+      max: 0.5
+    ref:
+      min: 0.
+      max: 0.1
+    latex: f_{EDE}
+    proposal: 0.01
+  log_zc:
+    prior: 
+      min: 3.
+      max: 4.3
+    ref: 
+      min: 3.
+      max: 4.3
+    latex: log_{10}(z_c)
+    proposal: 0.01
+    drop: True
+  zc:
+    value: "lambda log_zc: 10**log_zc"
+
+theory:
+  camb:
+    extra_args:
+      dark_energy_model: "EarlyQuintessence"
+      use_zc: True
+      n: 3
+    stop_at_error: False
+
+
+

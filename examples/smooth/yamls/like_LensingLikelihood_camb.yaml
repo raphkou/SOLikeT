@@ -2,4 +2,4 @@ soliket.LensingLikelihood:
   data_filename: clkk_smooth.fits
   theory_lmax: 5000
   stop_at_error: False
-  pp_ccl: True
+  pp_ccl: False

@@ -52,7 +52,7 @@ gs_des_bin1_m:
   latex: m_{1}
   prior:
     dist: norm
-    loc: -0.006
+    loc: 0.
     scale: 0.009
   proposal: 0.02
   ref: 0.0
@@ -60,7 +60,7 @@ gs_des_bin2_m:
   latex: m_{2}
   prior:
     dist: norm
-    loc: -0.020
+    loc: 0.
     scale: 0.008
   proposal: 0.02
   ref: 0.0
@@ -68,7 +68,7 @@ gs_des_bin3_m:
   latex: m_{3}
   prior:
     dist: norm
-    loc: -0.024
+    loc: 0.
     scale: 0.008
   proposal: 0.02
   ref: 0.0
@@ -76,7 +76,7 @@ gs_des_bin4_m:
   latex: m_{4}
   prior:
     dist: norm
-    loc: -0.037
+    loc: 0.
     scale: 0.008
   proposal: 0.02
   ref: 0.0
