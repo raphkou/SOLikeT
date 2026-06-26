@@ -1,0 +1,4 @@
+likelihood:
+  mflike.TTTEEE:
+    input_file: /mnt/pact/rk480/SOLikeT/notebooks/ISO_sims/sims/mflike_smooth.fits
+    cov_Bbl_file: data_sacc_w_covar_and_Bbl.fits

@@ -1,0 +1,12 @@
+# Massive neutrinos: mnu promoted to a free parameter (flat prior).
+# nnu fixed to its standard value by CAMB default (not listed here).
+params:
+  mnu:
+    prior:
+      min: 0.0
+      max: 5.0
+    ref:
+      min: 0.0
+      max: 0.1
+    latex: \sum m_\nu
+    proposal: 0.01

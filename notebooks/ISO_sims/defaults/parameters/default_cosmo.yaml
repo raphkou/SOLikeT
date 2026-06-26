@@ -1,10 +1,8 @@
-# ISO sims — local cosmology override for soliket.presets.
-# Unlike the bundled soliket/presets/params/cosmo.yaml (which uses cobaya's
-# single-massive neutrino default), this file deliberately keeps the SO
-# 2-eigenstate NORMAL-HIERARCHY neutrino params (mnu1/mnu2/mnu3 + the mnu sum).
-# The matching camb extra_args (num_nu_massive, nu_mass_eigenstates, ...) are set
-# inline in analyse_datasets.ipynb. Passed to build_info(..., params_dir="params").
-# Only the groups present here override; foreground/systematics fall back to the package.
+# SOLikeT Fiducial map — cosmology group.
+# One file per top-level group; the loader keys the group off the filename.
+# A "dual" parameter (carrying a `prior`) is sampled only when its name is passed
+# to load_params(sample=[...]); otherwise it collapses to `value: <central>`,
+# keeping `latex`/`drop`/`renames`. CAMB-first; `renames:` keep CLASS recognisable.
 H0:
   prior: {min: 40, max: 100}
   ref: {dist: norm, loc: 67.7, scale: 0.1}
@@ -37,14 +35,12 @@ tau:
 Alens:
   value: 1.0
   latex: 'A_\mathrm{lens}'
+mnu:
+  value: 0.06
+  latex: '\sum m_\nu'
 omega_de: {derived: true, latex: '\Omega_\Lambda'}
 omegam: {derived: true, latex: '\Omega_\mathrm{m}'}
 omegamh2:
   derived: 'lambda omegam, H0: omegam*(H0/100)**2'
   latex: '\Omega_\mathrm{m} h^2'
 sigma8: {derived: true, latex: '\sigma_8'}
-mnu1: {value: 0.0, drop: true}
-mnu2: {value: 'lambda: np.sqrt(7.5e-5)', drop: true}
-mnu3: {value: 'lambda: np.sqrt(2.5e-3)', drop: true}
-mnu: {value: 'lambda mnu1, mnu2, mnu3: mnu1 + mnu2 + mnu3', latex: '\sum m_\nu'}
-nnu: {value: 3.044, latex: 'N_\mathrm{eff}'}

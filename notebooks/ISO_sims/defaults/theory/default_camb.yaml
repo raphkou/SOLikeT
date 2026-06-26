@@ -1,0 +1,4 @@
+camb:
+  extra_args:
+    num_massive_neutrinos: 1
+    nnu: 3.044

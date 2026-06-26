@@ -1,0 +1,7 @@
+likelihood:
+  soliket.LensingLikelihood:
+    theory_lmax: 5000
+    data_folder: /mnt/pact/rk480/SOLikeT/notebooks/ISO_sims/sims
+    data_filename: lensing_smooth.sacc.fits
+    correction_filename: /mnt/pact/rk480/SOLikeT/cobaya_packages/data/LensingLikelihood/corrections_lensing.sacc.fits
+    fiducial_filename: /mnt/pact/rk480/SOLikeT/cobaya_packages/data/LensingLikelihood/fiducial_lensing.sacc.fits

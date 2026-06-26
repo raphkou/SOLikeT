@@ -1,0 +1,6 @@
+classy:
+  extra_args:
+    N_ncdm: 1
+    N_ur: 2.0328
+  params:
+    m_ncdm: {value: 0.06, renames: mnu}
