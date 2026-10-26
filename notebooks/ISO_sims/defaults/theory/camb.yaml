@@ -1,0 +1,14 @@
+# camb setup shared by every run: SO 2-eigenstate normal hierarchy.
+# The fiducial masses are in cosmo.yaml (mnu1, mnu2, mnu3); the mass fractions
+# below are mnu2/mnu and mnu3/mnu at that fiducial. They stay fixed when mnu is
+# sampled (models/mnu.yaml), i.e. the total mass is rescaled at fixed splitting.
+# Precision settings a probe needs are in probes/<probe>/camb.yaml.
+theory:
+  camb:
+    extra_args:
+      num_nu_massless: 1.044
+      num_nu_massive: 2
+      nu_mass_eigenstates: 2
+      nu_mass_fractions: [0.14763410387308012, 0.8523658961269198]
+      nu_mass_numbers: [1, 1]
+      share_delta_neff: true

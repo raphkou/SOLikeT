@@ -1,0 +1,9 @@
+# Massive neutrinos: the mass sum becomes a free parameter (flat prior).
+# Replaces the fixed normal-hierarchy sum of cosmo.yaml; the mass splitting
+# set in theory/camb.yaml is kept.
+params:
+  mnu:
+    prior: {min: 0.0, max: 5.0}
+    ref: {min: 0.0, max: 0.1}
+    proposal: 0.01
+    latex: '\sum m_\nu'

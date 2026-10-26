@@ -1,0 +1,13 @@
+# Varying Neff: nnu becomes a free parameter.
+# Neutrino masses stay at the normal-hierarchy baseline of cosmo.yaml.
+#
+# WARNING: with the SO normal-hierarchy camb setup (theory/camb.yaml), the fixed
+# `num_nu_massless: 1.044` overrides what camb derives from nnu, so nnu currently only
+# changes the BBN helium fraction and N_eff stays at 3.044. Fix the camb setup before
+# running this model.
+params:
+  nnu:
+    prior: {min: 0.0, max: 5.0}
+    ref: {dist: norm, loc: 3.044, scale: 0.05}
+    proposal: 0.01
+    latex: 'N_\mathrm{eff}'
