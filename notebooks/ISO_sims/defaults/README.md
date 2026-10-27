@@ -39,10 +39,16 @@ defaults/
 │   │   ├── systematics.yaml  calibration / bandpass params
 │   │   ├── camb.yaml         camb precision this probe needs   (optional)
 │   │   └── sims.yaml         override pointing at the smooth twin (optional)
-│   └── lensing/
-│       ├── likelihood.yaml
-│       ├── camb.yaml
-│       └── sims.yaml
+│   ├── lensing/
+│   │   ├── likelihood.yaml
+│   │   ├── camb.yaml
+│   │   └── sims.yaml
+│   └── galaxy_kappa/
+│       ├── likelihood.yaml   galaxy x kappa cross-spectrum, on the CCL simulation
+│       ├── bias.yaml         b1 (sampled) and s1
+│       ├── theory.yaml       soliket.CCL
+│       ├── camb.yaml         non-linear P(k) precision
+│       └── sims.yaml         override pointing at the smooth twin
 ├── grid_spec.yaml        which models, datasets and groups exist; theory code
 ├── paths.yaml            file locations, relative to notebooks/ISO_sims/
 └── sims/

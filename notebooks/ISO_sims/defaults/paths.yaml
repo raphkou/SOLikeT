@@ -5,6 +5,7 @@
 # Products of create_datasets.ipynb and create_cross_covariance.ipynb (git-ignored).
 sims_dir: sims
 galaxy_kappa: sims/galaxy_kappa.sim.fits
+galaxy_kappa_smooth: sims/galaxy_kappa_smooth.sacc.fits
 lensing_smooth: sims/lensing_smooth.sacc.fits
 mflike_smooth: sims/mflike_smooth.fits
 cross_cov: sims/XCov_mflike_lensing.fits

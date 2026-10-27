@@ -22,12 +22,14 @@ datasets:
   multigaussian_mflike_lensing:
     probes: [mflike, lensing]
     cross_cov: cross_cov
+  galaxy_kappa:
+    probes: [galaxy_kappa]
 
 # Grid groups: which models are run on which datasets.
 groups:
   lcdm:
     models: [lcdm]
-    datasets: [mflike, lensing, multigaussian_mflike_lensing]
+    datasets: [mflike, lensing, multigaussian_mflike_lensing, galaxy_kappa]
   extended:
     models: [mnu, neff, mnu_neff]
-    datasets: [mflike, lensing, multigaussian_mflike_lensing]
+    datasets: [mflike, lensing, multigaussian_mflike_lensing, galaxy_kappa]

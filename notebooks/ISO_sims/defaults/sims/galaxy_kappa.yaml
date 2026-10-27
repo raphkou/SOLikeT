@@ -1,8 +1,7 @@
-# Settings of the unWISE-like galaxy x SO CMB-lensing simulation (create_datasets.ipynb).
-# The cosmology is the base fiducial of cosmo.yaml; the redshift distribution is
-# read from `galaxy_nz_reference` (paths.yaml).
-galaxy_bias: 1.0
-magnification_bias: 0.4
+# Survey and binning settings of the unWISE-like galaxy x SO CMB-lensing simulation
+# (create_datasets.ipynb). The cosmology is the base fiducial of cosmo.yaml, the
+# galaxy biases b1 and s1 the fiducial of probes/galaxy_kappa/bias.yaml, and the
+# redshift distribution is read from `galaxy_nz_reference` (paths.yaml).
 ngal_per_arcmin2: 1.0
 fsky: 0.4
 ell_max: 600
