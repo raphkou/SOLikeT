@@ -14,10 +14,12 @@ def top_hat_windows(ell_max, n_bins):
     """Uniform top-hat bandpower windows partitioning ``[0, ell_max]``.
 
     Returns ``(ells, window)`` where ``ells`` are the bin-centre multipoles and
-    ``window`` is a :class:`sacc.BandpowerWindow` with one unit-weight top-hat per
-    bin. The bins partition every multipole in ``0..ell_max`` inclusive with no
-    gaps; when ``ell_max + 1`` is not divisible by ``n_bins`` the bin widths differ
-    by at most one multipole rather than leaving the high-ell tail unbinned.
+    ``window`` is a :class:`sacc.BandpowerWindow` with one top-hat per bin. Each
+    top-hat is normalised to unit sum, so binning a spectrum with it (``window @
+    C_ell``, as the Gaussian likelihoods do) gives its average over the bin. The bins
+    partition every multipole in ``0..ell_max`` inclusive with no gaps; when
+    ``ell_max + 1`` is not divisible by ``n_bins`` the bin widths differ by at most
+    one multipole rather than leaving the high-ell tail unbinned.
     """
     import sacc
 
@@ -26,7 +28,7 @@ def top_hat_windows(ell_max, n_bins):
     ells = np.array([seg.mean() for seg in segments])
     weights = np.zeros((n_bins, len(ells_win)))
     for i, seg in enumerate(segments):
-        weights[i, seg] = 1.0
+        weights[i, seg] = 1.0 / len(seg)
     return ells, sacc.BandpowerWindow(ells_win, weights.T)
 
 

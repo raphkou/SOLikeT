@@ -30,8 +30,17 @@ def test_top_hat_windows_shapes_and_partition():
     assert weights.shape[1] == 20
     assert weights.shape[0] == 601  # every multipole 0..ell_max has a support slot
     # top-hat partition: every multipole, including ell_max, lands in exactly one bin
-    covered = weights.sum(axis=1)
-    np.testing.assert_array_equal(covered, np.ones(601))
+    bins_per_ell = (weights > 0).sum(axis=1)
+    np.testing.assert_array_equal(bins_per_ell, np.ones(601))
+    # each window averages over its bin: weights sum to one
+    np.testing.assert_allclose(weights.sum(axis=0), np.ones(20))
+
+
+def test_top_hat_windows_bin_a_constant_to_itself():
+    # Binning a constant spectrum must return that constant in every bin.
+    ells, window = top_hat_windows(ell_max=600, n_bins=20)
+    binned = window.weight.T @ np.full(601, 3.0)
+    np.testing.assert_allclose(binned, np.full(20, 3.0))
 
 
 def test_top_hat_windows_covers_tail_when_not_divisible():
@@ -40,8 +49,9 @@ def test_top_hat_windows_covers_tail_when_not_divisible():
     ells, window = top_hat_windows(ell_max=100, n_bins=3)
 
     assert ells.shape == (3,)
-    covered = window.weight.sum(axis=1)
-    np.testing.assert_array_equal(covered, np.ones(101))
+    bins_per_ell = (window.weight > 0).sum(axis=1)
+    np.testing.assert_array_equal(bins_per_ell, np.ones(101))
+    np.testing.assert_allclose(window.weight.sum(axis=0), np.ones(3))
 
 
 def test_gaussian_covariance_is_symmetric_positive_diagonal():
