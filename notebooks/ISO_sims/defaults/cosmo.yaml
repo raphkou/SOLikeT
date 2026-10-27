@@ -2,9 +2,8 @@
 # Parameters with a `prior` are sampled in the grid; in the notebooks they are fixed
 # to their fiducial value (ref.loc) unless listed in `sample`.
 #
-# Neutrinos: SO 2-eigenstate normal hierarchy. The individual masses below set the
-# fiducial sum; the matching camb settings (eigenstate structure, mass fractions)
-# are in theory/camb.yaml.
+# Neutrinos: normal hierarchy at its minimal mass sum; how camb splits the sum
+# between eigenstates is set in theory/camb.yaml.
 params:
   H0:
     prior: {min: 40, max: 100}
@@ -38,13 +37,9 @@ params:
   Alens:
     value: 1.0
     latex: 'A_\mathrm{lens}'
-  # Normal hierarchy with a massless lightest state:
-  # mnu2 = sqrt(7.5e-5) eV, mnu3 = sqrt(2.5e-3) eV.
-  mnu1: {value: 0.0, drop: true}
-  mnu2: {value: 0.008660254037844387, drop: true}
-  mnu3: {value: 0.05, drop: true}
+  # Minimal normal-hierarchy sum: 0 + sqrt(7.5e-5) + sqrt(2.5e-3) eV.
   mnu:
-    value: 'lambda mnu1, mnu2, mnu3: mnu1 + mnu2 + mnu3'
+    value: 0.0586602540378444
     latex: '\sum m_\nu'
   nnu:
     value: 3.044

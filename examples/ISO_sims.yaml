@@ -6,16 +6,8 @@
 theory:
   camb:
     extra_args:
-      num_nu_massless: 1.044
-      num_nu_massive: 2
-      nu_mass_eigenstates: 2
-      nu_mass_fractions:
-      - 0.14763410387308012
-      - 0.8523658961269198
-      nu_mass_numbers:
-      - 1
-      - 1
-      share_delta_neff: true
+      neutrino_hierarchy: normal
+      num_massive_neutrinos: 3
       lens_potential_accuracy: 1
       WantTransfer: true
       Transfer.high_precision: true
@@ -179,19 +171,9 @@ params:
   Alens:
     value: 1.0
     latex: A_\mathrm{lens}
-  mnu1:
-    value: 0.0
-    drop: true
-  mnu2:
-    value: 0.008660254037844387
-    drop: true
-  mnu3:
-    value: 0.05
-    drop: true
   mnu:
-    value: 'lambda mnu1, mnu2, mnu3: mnu1 + mnu2 + mnu3'
+    value: 0.0586602540378444
     latex: \sum m_\nu
-    derived: true
   nnu:
     value: 3.044
     latex: N_\mathrm{eff}

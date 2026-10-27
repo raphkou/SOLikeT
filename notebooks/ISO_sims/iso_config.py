@@ -26,7 +26,7 @@ THEORY_CODES = ["camb", "classy"]
 
 # Neutrino params of cosmo.yaml that only camb understands; classy gets its fixed
 # normal-hierarchy masses from theory/classy.yaml instead.
-CAMB_ONLY_PARAMS = ["mnu1", "mnu2", "mnu3", "mnu", "nnu"]
+CAMB_ONLY_PARAMS = ["mnu", "nnu"]
 CAMB_ONLY_MODELS = ["mnu", "neff"]
 
 # Keys of a dual parameter that only make sense when it is sampled.
@@ -282,8 +282,8 @@ def ccl_cosmology(**ccl_overrides):
         "n_s": p["ns"],
         "A_s": 1e-10 * np.exp(p["logA"]),
         "Neff": p["nnu"],
-        "m_nu": [p["mnu1"], p["mnu2"], p["mnu3"]],
-        "mass_split": "list",
+        "m_nu": p["mnu"],
+        "mass_split": settings["neutrino_mass_split"],
         "matter_power_spectrum": settings["matter_power_spectrum"],
     }
     arguments.update(ccl_overrides)

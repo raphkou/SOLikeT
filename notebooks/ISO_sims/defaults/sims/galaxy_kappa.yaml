@@ -9,3 +9,6 @@ ell_max: 600
 n_bins: 20
 z_source_cmb: 1086.0
 matter_power_spectrum: linear
+# How CCL splits the neutrino mass sum of cosmo.yaml. CCL's `normal` split needs
+# mnu >= 0.0592 eV, above the fiducial; `single` matches what camb does there.
+neutrino_mass_split: single

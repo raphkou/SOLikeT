@@ -24,10 +24,10 @@ describe *which* pieces to combine and *where* files are, not Cobaya input.
 
 ```
 defaults/
-├── cosmo.yaml            base cosmology (fiducial + priors), incl. SO normal hierarchy
+├── cosmo.yaml            base cosmology (fiducial + priors), incl. neutrino mass sum
 ├── sampler.yaml          sampler settings shared by every run
 ├── theory/
-│   ├── camb.yaml         camb neutrino setup (SO 2-eigenstate normal hierarchy)
+│   ├── camb.yaml         camb neutrino setup (camb's built-in normal hierarchy)
 │   └── classy.yaml       classy equivalent (fixed NH masses)
 ├── models/               one file per model extension (lcdm = nothing extra)
 │   ├── mnu.yaml

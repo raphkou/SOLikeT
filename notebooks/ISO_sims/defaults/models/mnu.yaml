@@ -1,6 +1,7 @@
 # Massive neutrinos: the mass sum becomes a free parameter (flat prior).
-# Replaces the fixed normal-hierarchy sum of cosmo.yaml; the mass splitting
-# set in theory/camb.yaml is kept.
+# Replaces the fixed normal-hierarchy sum of cosmo.yaml; camb splits each sampled
+# sum as set in theory/camb.yaml. Below the minimal normal-hierarchy sum
+# (~0.059 eV) camb does not fail: it puts the whole sum on one massive neutrino.
 params:
   mnu:
     prior: {min: 0.0, max: 5.0}
