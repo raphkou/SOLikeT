@@ -201,8 +201,9 @@ likelihood:
       stop_at_error: true
       data_folder: <REPO>/notebooks/ISO_sims/sims
       data_filename: <REPO>/notebooks/ISO_sims/sims/lensing_smooth.sacc.fits
-      correction_filename: <PACKAGES>/data/LensingLikelihood/corrections_lensing.sacc.fits
-      fiducial_filename: <PACKAGES>/data/LensingLikelihood/fiducial_lensing.sacc.fits
+      correction_filename: <REPO>/cobaya_packages/data/LensingLikelihood/corrections_lensing.sacc.fits
+      fiducial_filename: <REPO>/cobaya_packages/data/LensingLikelihood/fiducial_lensing.sacc.fits
     stop_at_error: true
-packages_path: <PACKAGES>
+    cross_cov_path: <REPO>/notebooks/ISO_sims/sims/XCov_mflike_lensing.fits
+packages_path: <REPO>/cobaya_packages
 output: chains/ISO_sims

@@ -262,6 +262,40 @@ def fiducial_values(params):
     return values
 
 
+# ------------------------------------------------------------------------- camb
+
+
+def cosmology_param_names():
+    """Names of the cosmological parameters: those of cosmo.yaml and of models/."""
+    names = set(load_yaml("cosmo.yaml")["params"])
+    for model_file in sorted((DEFAULTS / "models").glob("*.yaml")):
+        names.update(load_yaml(f"models/{model_file.name}").get("params", {}))
+    return names
+
+
+def camb_arguments(model, info):
+    """``camb.set_params`` arguments reproducing the camb run of an evaluated model.
+
+    ``model`` is the cobaya model built from ``info`` (every parameter fixed).
+    Returns ``(cosmo, accuracy)``:
+
+    - ``cosmo``: the cosmological parameters at the values the model uses, with
+      derived inputs computed (e.g. As from logA) and dropped ones (logA) left out;
+    - ``accuracy``: the camb ``extra_args`` of ``info`` (neutrino setup, precision).
+
+    Use them where camb is called outside cobaya (e.g. the cross-covariance
+    derivative), so that it runs with exactly the same settings as the analysis.
+    """
+    inputs = model.parameterization.to_input({})
+    cosmo = {}
+    for name in cosmology_param_names():
+        spec = info["params"].get(name)
+        if name in inputs and not (isinstance(spec, dict) and spec.get("drop")):
+            cosmo[name] = float(inputs[name])
+    accuracy = dict(info["theory"]["camb"].get("extra_args", {}))
+    return cosmo, accuracy
+
+
 # --------------------------------------------------------------------- CCL sims
 
 
