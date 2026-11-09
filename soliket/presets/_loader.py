@@ -52,6 +52,16 @@ def build_params(spec, sample=None, groups=None):
                 f"provides them; available groups: {sorted(spec)}"
             )
         selected = {g: spec[g] for g in groups}
+    # Only dual parameters (those carrying a prior) can be sampled, so an unknown
+    # name -- a typo, a param from a group this preset does not load, or one fixed
+    # by value -- would otherwise be dropped in silence and yield a fully-fixed run.
+    sampleable = {n for g in selected.values() for n, p in g.items() if "prior" in p}
+    unknown = sample - sampleable
+    if unknown:
+        raise ValueError(
+            f"cannot sample {sorted(unknown)}: not a dual parameter in group(s) "
+            f"{sorted(selected)}; sampleable here: {sorted(sampleable)}"
+        )
     params = {}
     for group in selected.values():
         for name, pspec in group.items():
@@ -98,19 +108,15 @@ def _bundled_defaults_dir():
     return resources.files(__package__).joinpath("defaults")
 
 
-# Reserved stem: ``theory.yaml`` is the neutrino/theory overlay, not a param
-# group, so it is excluded from group discovery and loaded via ``load_theory``.
+# ``theory.yaml`` is the neutrino/theory overlay rather than a param group, so it is
+# not listed in _GROUPS and is loaded via ``load_theory``.
 _THEORY_GROUP = "theory"
 
-
-def _group_names():
-    """Canonical group set: the stems of the bundled ``defaults/*.yaml`` files,
-    excluding the reserved ``theory`` overlay."""
-    return sorted(
-        entry.name[: -len(".yaml")]
-        for entry in _bundled_defaults_dir().iterdir()
-        if entry.name.endswith(".yaml") and entry.name[: -len(".yaml")] != _THEORY_GROUP
-    )
+# The param groups, one bundled ``defaults/<group>.yaml`` each. An override folder
+# can only replace a bundled group's file, never add a group, so this is the full
+# set by construction; adding one means shipping the yaml AND naming it here (plus
+# in the presets that want it -- see PRESETS["<preset>"]["groups"]).
+_GROUPS = ("cosmo", "foreground", "systematics")
 
 
 def _as_mapping(text, source):
@@ -145,7 +151,7 @@ def load_fiducial_map(defaults_dir=None):
     optionally supplies override files; any ``<group>.yaml`` it contains replaces
     the bundled file for that group (per-file fallback, mflike-style).
     """
-    return {group: _read_group(group, defaults_dir) for group in _group_names()}
+    return {group: _read_group(group, defaults_dir) for group in _GROUPS}
 
 
 def load_theory(defaults_dir=None):

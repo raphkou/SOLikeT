@@ -21,6 +21,7 @@ from soliket.presets import (
     Session,
     build_info,
     build_params,
+    load_fiducial_map,
     load_params,
     quickstart,
     resolve_aliases,
@@ -237,6 +238,23 @@ def test_load_params_keeps_prior_for_sampled_params():
     assert params["ns"]["value"] == 0.9649
 
 
+def test_load_params_rejects_unsampleable_names():
+    # A name that matches nothing is a typo, and silently returning a fully-fixed
+    # info would send an MCMC off sampling zero parameters.
+    with pytest.raises(ValueError, match="cannot sample"):
+        load_params(sample=["taau"])
+
+    # A real dual param, but from a group this call does not load.
+    with pytest.raises(ValueError, match="cannot sample"):
+        load_params(sample=["a_tSZ"], groups=["cosmo"])
+
+    # A param that exists in the group but carries no prior, so cannot be varied.
+    fixed = [n for n, p in load_fiducial_map()["cosmo"].items() if "prior" not in p]
+    if fixed:
+        with pytest.raises(ValueError, match="cannot sample"):
+            load_params(sample=[fixed[0]], groups=["cosmo"])
+
+
 def test_load_fiducial_map_reads_all_groups():
     from soliket.presets import load_fiducial_map
 
@@ -251,9 +269,9 @@ def test_load_params_override_dir_replaces_one_group(tmp_path):
 
     params = load_params(defaults_dir=str(tmp_path))
 
-    assert params["ns"]["value"] == 0.5            # overridden file used
-    assert params["a_tSZ"]["value"] == 3.30        # foreground fell back to bundled
-    assert params["cal_LAT_93"]["value"] == 1      # systematics fell back to bundled
+    assert params["ns"]["value"] == 0.5  # overridden file used
+    assert params["a_tSZ"]["value"] == 3.30  # foreground fell back to bundled
+    assert params["cal_LAT_93"]["value"] == 1  # systematics fell back to bundled
 
 
 def test_load_params_rejects_non_mapping_override(tmp_path):
@@ -291,7 +309,7 @@ def _mflike_fg_defaults():
 def test_presets_foreground_matches_mflike_defaults(check_skip_mflike):
     """Drift tripwire: presets foreground priors must match mflike's defaults.
 
-    ``soliket/presets/params/foreground.yaml`` DUPLICATES the ``prior``,
+    ``soliket/presets/defaults/foreground.yaml`` DUPLICATES the ``prior``,
     ``proposal`` and ``latex`` values from mflike's shipped foreground defaults
     (``fg_TT.yaml``, ``fg_TE.yaml``, ``fg_EE.yaml`` and the ``params:`` block of
     ``Foreground.yaml``), adding an SO-specific ``ref`` that mflike does not ship.
@@ -300,7 +318,7 @@ def test_presets_foreground_matches_mflike_defaults(check_skip_mflike):
     default we copied, this fails loudly instead of silently shifting our priors.
 
     When it fails: review mflike's change and deliberately re-pin
-    ``soliket/presets/params/foreground.yaml`` to match (or, if the deviation is
+    ``soliket/presets/defaults/foreground.yaml`` to match (or, if the deviation is
     an intentional SO choice, add a documented exclusion here). Do NOT just
     force it green.
 
@@ -329,7 +347,7 @@ def test_presets_foreground_matches_mflike_defaults(check_skip_mflike):
         "Presets foreground priors have DRIFTED from mflike's shipped defaults. "
         "This tripwire guards against an mflike bump silently changing the "
         "foreground priors we duplicated in "
-        "soliket/presets/params/foreground.yaml. Review mflike's change and "
+        "soliket/presets/defaults/foreground.yaml. Review mflike's change and "
         "deliberately re-pin that file (or add a documented exclusion). "
         "Mismatches (name, field, presets_value, mflike_value): "
         + "; ".join(
@@ -387,6 +405,83 @@ def test_build_info_theory_falls_back_to_bundled_when_dir_lacks_it(tmp_path):
 
     assert ea["num_massive_neutrinos"] == 1
     assert ea["nnu"] == 3.044
+
+
+def test_build_info_template_dir_override_patches_likelihood_option(tmp_path):
+    # A defaults folder carrying templates/<preset>.yaml overlays the packaged
+    # skeleton (recursive_update): the named option changes...
+    templates = tmp_path / "templates"
+    templates.mkdir()
+    (templates / "lensing.yaml").write_text(
+        "likelihood:\n  soliket.LensingLikelihood:\n    theory_lmax: 3000\n"
+    )
+
+    info = build_info("lensing", defaults_dir=str(tmp_path))
+    like = info["likelihood"]["soliket.LensingLikelihood"]
+
+    # the override wins...
+    assert like["theory_lmax"] == 3000
+    # ...and the rest of the packaged skeleton is inherited (overlay, not replace).
+    assert info["theory"]["camb"]["extra_args"]["kmax"] == 0.9
+    assert "evaluate" in info["sampler"]
+
+
+def test_build_info_template_falls_back_to_bundled_when_dir_lacks_it(tmp_path):
+    # A defaults folder overriding only params (no templates/) leaves the packaged
+    # likelihood skeleton untouched.
+    (tmp_path / "cosmo.yaml").write_text("ns: {value: 0.9649, latex: 'n_s'}\n")
+
+    info = build_info("lensing", defaults_dir=str(tmp_path))
+    assert info["likelihood"]["soliket.LensingLikelihood"]["theory_lmax"] == 5000
+
+
+def _mgl_options(info):
+    mgl = info["likelihood"]["soliket.gaussian.MultiGaussianLikelihood"]
+    return mgl["components"], mgl["options"]
+
+
+def test_multigaussian_composes_options_from_members_in_component_order():
+    # The joint skeleton declares only `components`; build_info fills `options`
+    # positionally from the member presets (mflike.yaml / lensing.yaml).
+    info = build_info("multigaussian")
+    components, options = _mgl_options(info)
+
+    assert components == ["mflike.TTTEEE", "soliket.LensingLikelihood"]
+    assert options[0]["input_file"] == "LAT_simu_sacc_00044.fits"  # from mflike.yaml
+    assert options[1]["theory_lmax"] == 5000  # from lensing.yaml
+
+
+def test_multigaussian_theory_unions_member_precision():
+    # Regression: the joint camb extra_args must carry BOTH members' precision
+    # (mflike's Transfer.* and lensing's kmax), not silently drop either.
+    ea = build_info("multigaussian")["theory"]["camb"]["extra_args"]
+
+    assert ea["kmax"] == 0.9  # from lensing.yaml
+    assert ea["Transfer.kmax"] == 1.2  # from mflike.yaml
+    assert ea["WantTransfer"] is True  # from mflike.yaml
+    # the joint-level skeleton override is applied last (last wins)
+    assert build_info("multigaussian")["theory"]["camb"]["stop_at_error"] is False
+    # the foreground theory component rides in from the mflike member
+    assert "mflike.BandpowerForeground" in build_info("multigaussian")["theory"]
+
+
+def test_member_template_override_flows_to_standalone_and_joint(tmp_path):
+    # A single folder override on a member template reaches BOTH the standalone
+    # member preset and the joint preset that composes it -- so an imprint built
+    # from `lensing` and a fit built from `multigaussian` stay consistent.
+    templates = tmp_path / "templates"
+    templates.mkdir()
+    (templates / "lensing.yaml").write_text(
+        "likelihood:\n  soliket.LensingLikelihood:\n    theory_lmax: 3000\n"
+    )
+
+    solo = build_info("lensing", defaults_dir=str(tmp_path))
+    _, joint_options = _mgl_options(
+        build_info("multigaussian", defaults_dir=str(tmp_path))
+    )
+
+    assert solo["likelihood"]["soliket.LensingLikelihood"]["theory_lmax"] == 3000
+    assert joint_options[1]["theory_lmax"] == 3000
 
 
 def test_dual_param_fixed_to_central_when_not_sampled():

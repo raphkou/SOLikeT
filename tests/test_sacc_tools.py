@@ -8,6 +8,8 @@ import sacc
 from cobaya.tools import resolve_packages_path
 
 from soliket.sacc_tools import (
+    build_lensing_corrections_sacc,
+    build_lensing_sacc,
     gaussian_covariance,
     smooth_mflike_sacc,
     smooth_twin_sacc,
@@ -30,17 +32,7 @@ def test_top_hat_windows_shapes_and_partition():
     assert weights.shape[1] == 20
     assert weights.shape[0] == 601  # every multipole 0..ell_max has a support slot
     # top-hat partition: every multipole, including ell_max, lands in exactly one bin
-    bins_per_ell = (weights > 0).sum(axis=1)
-    np.testing.assert_array_equal(bins_per_ell, np.ones(601))
-    # each window averages over its bin: weights sum to one
-    np.testing.assert_allclose(weights.sum(axis=0), np.ones(20))
-
-
-def test_top_hat_windows_bin_a_constant_to_itself():
-    # Binning a constant spectrum must return that constant in every bin.
-    ells, window = top_hat_windows(ell_max=600, n_bins=20)
-    binned = window.weight.T @ np.full(601, 3.0)
-    np.testing.assert_allclose(binned, np.full(20, 3.0))
+    np.testing.assert_array_equal((weights != 0).sum(axis=1), np.ones(601))
 
 
 def test_top_hat_windows_covers_tail_when_not_divisible():
@@ -49,9 +41,21 @@ def test_top_hat_windows_covers_tail_when_not_divisible():
     ells, window = top_hat_windows(ell_max=100, n_bins=3)
 
     assert ells.shape == (3,)
-    bins_per_ell = (window.weight > 0).sum(axis=1)
-    np.testing.assert_array_equal(bins_per_ell, np.ones(101))
-    np.testing.assert_allclose(window.weight.sum(axis=0), np.ones(3))
+    np.testing.assert_array_equal((window.weight != 0).sum(axis=1), np.ones(101))
+
+
+def test_top_hat_windows_bin_a_constant_to_itself():
+    # Pins the *normalisation*, which the partition assertions above cannot see: a
+    # likelihood bins theory as `w_bins @ cl` with no implicit averaging, so a
+    # window whose per-bin weights sum to one must return a constant spectrum
+    # unchanged. Unit-weight (sum) windows would return delta_ell * const instead,
+    # silently mismatching data stored at the bin centres by a factor ~30.
+    for ell_max, n_bins in [(600, 20), (100, 3)]:  # divisible and not
+        _, window = top_hat_windows(ell_max=ell_max, n_bins=n_bins)
+        w_bins = window.weight.T
+        np.testing.assert_allclose(w_bins.sum(axis=1), np.ones(n_bins))
+        cl = np.full(ell_max + 1, 3.7)
+        np.testing.assert_allclose(w_bins @ cl, np.full(n_bins, 3.7))
 
 
 def test_gaussian_covariance_is_symmetric_positive_diagonal():
@@ -86,14 +90,26 @@ def _tiny_lensing_sacc(values):
     """A one-spectrum (cl_00, ck x ck) SACC with windows and a covariance."""
     n = len(values)
     s = sacc.Sacc()
-    s.add_tracer("Map", "ck", quantity="cmb_convergence", spin=0,
-                 ell=np.arange(100), beam=np.ones(100))
+    s.add_tracer(
+        "Map",
+        "ck",
+        quantity="cmb_convergence",
+        spin=0,
+        ell=np.arange(100),
+        beam=np.ones(100),
+    )
     support = np.arange(2, 2 + 3 * n)
     weight = np.zeros((len(support), n))
     for b, idx in enumerate(np.array_split(np.arange(len(support)), n)):
         weight[idx, b] = 1.0 / len(idx)
-    s.add_ell_cl("cl_00", "ck", "ck", np.arange(n), values,
-                 window=sacc.BandpowerWindow(support, weight))
+    s.add_ell_cl(
+        "cl_00",
+        "ck",
+        "ck",
+        np.arange(n),
+        values,
+        window=sacc.BandpowerWindow(support, weight),
+    )
     s.add_covariance(np.diag(np.full(n, 4.0)))
     return s
 
@@ -107,12 +123,81 @@ def test_smooth_twin_sacc_replaces_mean_and_reuses_windows_and_cov(tmp_path):
 
     twin = smooth_twin_sacc(src, "cl_00", "ck", "ck", theory, out_path=out)
 
-    np.testing.assert_array_equal(twin.mean, theory)            # data == theory
+    np.testing.assert_array_equal(twin.mean, theory)  # data == theory
     np.testing.assert_array_equal(twin.covariance.covmat, src.covariance.covmat)
-    assert "ck" in twin.tracers                                 # tracer carried over
+    assert "ck" in twin.tracers  # tracer carried over
     reloaded = sacc.Sacc.load_fits(str(out))
-    np.testing.assert_array_equal(reloaded.mean, theory)        # survives round-trip
+    np.testing.assert_array_equal(reloaded.mean, theory)  # survives round-trip
     assert reloaded.get_bandpower_windows(np.arange(len(theory))) is not None
+
+
+def test_build_lensing_sacc_stores_binned_bandpowers(tmp_path):
+    # The "bring your own bandpowers" data builder: what it stores must be exactly
+    # the binned spectrum (the chi^2 = 0 condition), on a cmb_convergence tracer.
+    ells, window = top_hat_windows(ell_max=120, n_bins=12)
+    clkk = np.exp(-np.arange(200) / 80.0)
+    binned = window.weight.T @ clkk[np.asarray(window.values, dtype=int)]
+    cov = np.diag((0.1 * binned) ** 2)
+    out = tmp_path / "byob.fits"
+
+    s = build_lensing_sacc(ells, binned, cov, windows=window, out_path=out)
+
+    assert s.tracers["ck"].quantity == "cmb_convergence"
+    reloaded = sacc.Sacc.load_fits(str(out))
+    _, cl = reloaded.get_ell_cl("cl_00", "ck", "ck", return_cov=False)
+    np.testing.assert_allclose(cl, binned)
+    np.testing.assert_allclose(reloaded.covariance.covmat, cov)
+
+
+def test_build_lensing_corrections_sacc_round_trips_through_from_sacc(tmp_path):
+    # The correction/fiducial writer must be the exact inverse of the reader the
+    # full LensingLikelihood uses (LensingCorrections.from_sacc), including the
+    # normalisation stored as a matrix whose row 0 is n0.
+    from soliket.lensing._corrections import LensingCorrections
+
+    lmax = 40
+
+    def _mat(seed):
+        return np.arange(lmax * lmax, dtype=float).reshape(lmax, lmax) + seed
+
+    fiducial = {k: np.linspace(1.0, 2.0, lmax) + i
+                for i, k in enumerate(("tt", "te", "ee", "bb", "kk"))}
+    n0_response = {k: _mat(i) for i, k in enumerate(("tt", "te", "ee", "bb"))}
+    n1_response = {k: _mat(10 + i) for i, k in enumerate(("tt", "te", "ee", "bb"))}
+    n1_clpp = _mat(99)
+    n0 = np.linspace(5.0, 6.0, lmax)
+
+    build_lensing_corrections_sacc(
+        fiducial=fiducial, n0_response=n0_response, n1_response=n1_response,
+        n1_clpp=n1_clpp, n0=n0,
+        fiducial_out=tmp_path / "fid.fits", corrections_out=tmp_path / "cor.fits",
+    )
+
+    fid_sacc = sacc.Sacc.load_fits(str(tmp_path / "fid.fits"))
+    cor_sacc = sacc.Sacc.load_fits(str(tmp_path / "cor.fits"))
+    fid_read = {
+        "kk": fid_sacc.get_ell_cl(None, "ck", "ck")[1],
+        "tt": fid_sacc.get_ell_cl(None, "ct", "ct")[1],
+        "ee": fid_sacc.get_ell_cl(None, "ce", "ce")[1],
+        "bb": fid_sacc.get_ell_cl(None, "cb", "cb")[1],
+        "te": fid_sacc.get_ell_cl(None, "ct", "ce")[1],
+    }
+    for k in fiducial:
+        np.testing.assert_allclose(fid_read[k], fiducial[k])
+
+    lc = LensingCorrections.from_sacc(cor_sacc, fiducial=fid_read)
+    np.testing.assert_allclose(lc.n0, n0)  # recovered from the tiled matrix's row 0
+    np.testing.assert_allclose(lc.n0_response["tt"], n0_response["tt"])
+    np.testing.assert_allclose(lc.n1_response["bb"], n1_response["bb"])
+    np.testing.assert_allclose(lc.n1_clpp, n1_clpp)
+    np.testing.assert_allclose(lc.thetaclkk, fiducial["kk"])
+
+    corr = lc.compute(
+        cls={s: np.linspace(0.1, 0.2, lmax) for s in ("tt", "te", "ee", "bb")},
+        clkk_theo=np.linspace(0.3, 0.4, lmax),
+        binning_matrix=np.eye(lmax),
+    )
+    assert corr.shape == (lmax,)
 
 
 def _numeric_fiducial(info):
